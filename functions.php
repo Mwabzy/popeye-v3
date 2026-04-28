@@ -4,6 +4,9 @@
  * Enqueues styles, scripts, and registers theme supports.
  */
 
+// ── Export / Import admin tool ───────────────────────────────────────────────
+require_once __DIR__ . '/admin-export-import.php';
+
 // ── Enqueue assets ──────────────────────────────────────────────────────────
 function popeye_enqueue_assets() {
     // Google Fonts
