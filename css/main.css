@@ -2071,6 +2071,11 @@ button {
     grid-row: span 1;
   }
 
+  .dest-card--featured h3,
+  .dest-kenya h3 {
+    font-size: 2.2rem;
+  }
+
   .dest-spotlight {
     font-size: 0.95rem;
   }
