@@ -125,13 +125,6 @@ get_header();
         <p>The basis for data processing is Art. 6 (1) (b) of the EU DSGVO/GDPR, which allows the processing of data to fulfill a contract or for measures preliminary to a contract.</p>
     </section>
 
-    <!-- Section 4: Newsletter -->
-    <section class="policy-block">
-        <h2>Newsletter</h2>
-        <p>If you would like to receive our newsletter, we require a valid email address as well as information that allows us to verify that you are the owner of the specified email address and that you agree to receive this newsletter. No additional data is collected or is only collected on a voluntary basis. We only use this data to send the requested information and do not pass it on to third parties.</p>
-        <p>We will, therefore, process any data you enter in the contact form only with your consent per Art. 6 (1) (a) of the EU DSGVO/GDPR. You can revoke consent to the storage of your data and email address as well as their use for sending the newsletter at any time, e.g. through the "unsubscribe" link in the newsletter. The data processed before we receive your request may still be legally processed.</p>
-        <p>The data provided when registering for the newsletter will be used to distribute the newsletter until you cancel your subscription when said data will be deleted. Data we have stored for other purposes (e.g. email addresses for the members area) remain unaffected.</p>
-    </section>
 
 </div><!-- /.policy-body -->
 
