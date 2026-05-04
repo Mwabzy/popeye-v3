@@ -22,7 +22,7 @@ function popeye_enqueue_assets() {
         'popeye-main',
         get_stylesheet_directory_uri() . '/css/main.css',
         ['popeye-google-fonts'],
-        '2.4'
+        '2.5'
     );
 
     // Main JS (loaded in footer)
@@ -30,7 +30,7 @@ function popeye_enqueue_assets() {
         'popeye-main',
         get_stylesheet_directory_uri() . '/js/main.js',
         [],
-        '2.4',
+        '2.5',
         true  // load in footer
     );
 }

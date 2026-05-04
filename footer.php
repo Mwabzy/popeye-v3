@@ -1,15 +1,6 @@
 <!-- Footer -->
 <footer class="footer">
     <div class="footer-inner">
-        <div class="footer-brand">
-            <img
-                src="<?php echo esc_url(get_stylesheet_directory_uri()); ?>/images/Popeye Logo Transparent Bg.webp"
-                alt="<?php echo esc_attr(get_bloginfo('name')); ?>"
-                class="footer-logo"
-            >
-            <p class="footer-brand-copy">Boutique East Africa journeys, tailored with care from the first idea to the final arrival.</p>
-        </div>
-
         <div class="footer-columns">
             <div class="footer-column">
                 <div class="footer-heading">
