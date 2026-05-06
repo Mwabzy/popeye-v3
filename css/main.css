@@ -2790,9 +2790,9 @@ button {
 }
 
 .footer-social {
-  align-items: center;
   display: flex;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 .footer-social-badge {

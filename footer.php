@@ -20,6 +20,15 @@
                         </span>
                         <span class="footer-social-label">Instagram</span>
                     </a>
+                    <a href="https://www.facebook.com/profile.php?id=61575614502804" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">
+                        <span class="footer-social-badge" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M13.5 8.5H15V6.5H13.5C12.1 6.5 11 7.6 11 9V10H9.5V12H11V17.5H13V12H14.5L15 10H13V9C13 8.7 13.2 8.5 13.5 8.5Z" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="footer-social-label">Facebook</span>
+                    </a>
                 </div>
             </div>
 
