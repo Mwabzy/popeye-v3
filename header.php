@@ -19,8 +19,8 @@
     </a>
     <div class="nav-links">
         <a href="<?php echo esc_url(home_url('/#services')); ?>" class="link">Services</a>
-        <a href="<?php echo esc_url(home_url('/destinations')); ?>" class="link">Destinations</a>
-        <a href="<?php echo esc_url(home_url('/journal')); ?>" class="link">Journal</a>
+        <a href="<?php echo esc_url(home_url('/#destinations')); ?>" class="link">Destinations</a>
+        <a href="<?php echo esc_url(home_url('/#blog')); ?>" class="link">Journal</a>
         <a href="<?php echo esc_url(home_url('/#story')); ?>" class="link">Our Story</a>
         <div class="trust-badge-nav">Replies within 2 hrs</div>
         <button class="btn-primary" data-open-planner="true">Plan my trip</button>

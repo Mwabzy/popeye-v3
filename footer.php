@@ -10,14 +10,16 @@
                     <h3>Social Media</h3>
                 </div>
                 <div class="footer-social">
-                    <span class="footer-social-badge" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" stroke-width="1.8"/>
-                            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
-                            <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/>
-                        </svg>
-                    </span>
-                    <span class="footer-social-label">Instagram</span>
+                    <a href="https://www.instagram.com/popeyetours?igsh=MWtoMmVpeWVteDBiOA==" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">
+                        <span class="footer-social-badge" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" stroke-width="1.8"/>
+                                <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+                                <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="footer-social-label">Instagram</span>
+                    </a>
                 </div>
             </div>
 
