@@ -1863,6 +1863,7 @@ button {
   .nav.scrolled {
     padding: 0.6rem 1.25rem;
     top: 0.5rem;
+    border-radius: 40px;
   }
 
   .nav.scrolled .nav-logo-img {
@@ -2198,6 +2199,7 @@ button {
   .nav.scrolled {
     padding: 0.55rem 1rem;
     top: 0.35rem;
+    border-radius: 30px;
   }
 
   .nav.scrolled .nav-logo-img {
