@@ -1989,6 +1989,7 @@ button {
     gap: 0.75rem;
     font-size: 0.85rem;
     align-items: flex-start;
+    color: var(--green);
   }
 
   .btn-whatsapp,
