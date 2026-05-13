@@ -197,12 +197,46 @@ function initPlanner(container) {
       const url = `https://wa.me/254726875876?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
     } else {
-      const subj = encodeURIComponent(
-        `Trip inquiry: ${state.type} in ${state.destinations.join(", ") || "East Africa"}`,
-      );
-      const body = encodeURIComponent(msg);
-      const url = `mailto:info@popeyetours.co.ke?subject=${subj}&body=${body}`;
-      window.open(url, "_blank");
+      const subject = `Trip inquiry: ${state.type} in ${state.destinations.join(", ") || "East Africa"}`;
+      const stepNav = sendBtn.closest(".step-nav");
+
+      const showSendError = (errMsg) => {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Start conversation";
+        let errEl = stepNav.querySelector(".planner-error");
+        if (!errEl) {
+          errEl = document.createElement("p");
+          errEl.className = "planner-error";
+          errEl.style.cssText = "color:red;margin:0.5rem 0 0;font-size:0.875rem;width:100%;";
+          stepNav.appendChild(errEl);
+        }
+        errEl.textContent = errMsg;
+      };
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Sending…";
+
+      const formData = new FormData();
+      formData.append("action", "popeye_inquiry");
+      formData.append("nonce", popeyeAjax.nonce);
+      formData.append("name", state.name);
+      formData.append("contact", state.contact);
+      formData.append("subject", subject);
+      formData.append("body", msg);
+
+      fetch(popeyeAjax.url, { method: "POST", body: formData })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            stepNav.innerHTML =
+              '<p class="planner-sent" style="margin:0;font-weight:600;">Message sent! We\'ll be in touch soon.</p>';
+          } else {
+            showSendError(
+              (data.data && data.data.message) || "Something went wrong. Please try again.",
+            );
+          }
+        })
+        .catch(() => showSendError("Something went wrong. Please try again."));
     }
   });
 

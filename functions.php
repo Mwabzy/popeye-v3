@@ -33,6 +33,11 @@ function popeye_enqueue_assets() {
         '2.5',
         true  // load in footer
     );
+
+    wp_localize_script('popeye-main', 'popeyeAjax', [
+        'url'   => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('popeye_inquiry'),
+    ]);
 }
 add_action('wp_enqueue_scripts', 'popeye_enqueue_assets');
 
@@ -1099,3 +1104,39 @@ function popeye_customize_register($wp_customize) {
     ]));
 }
 add_action('customize_register', 'popeye_customize_register');
+
+
+// ── Trip Planner: AJAX inquiry handler ──────────────────────────────────────
+function popeye_handle_inquiry() {
+    if ( ! check_ajax_referer('popeye_inquiry', 'nonce', false) ) {
+        wp_send_json_error(['message' => 'Security check failed.'], 403);
+    }
+
+    $name    = sanitize_text_field(wp_unslash($_POST['name'] ?? ''));
+    $contact = sanitize_email(wp_unslash($_POST['contact'] ?? ''));
+    $subject = sanitize_text_field(wp_unslash($_POST['subject'] ?? ''));
+    $body    = sanitize_textarea_field(wp_unslash($_POST['body'] ?? ''));
+
+    if ( empty($contact) || ! is_email($contact) ) {
+        wp_send_json_error(['message' => 'Please enter a valid email address.'], 400);
+    }
+
+    if ( empty($subject) || empty($body) ) {
+        wp_send_json_error(['message' => 'Missing required fields.'], 400);
+    }
+
+    $headers = [
+        'Content-Type: text/plain; charset=UTF-8',
+        'Reply-To: ' . $name . ' <' . $contact . '>',
+    ];
+
+    $sent = wp_mail('contact@popeyetours.co.ke', $subject, $body, $headers);
+
+    if ( $sent ) {
+        wp_send_json_success(['message' => 'Message sent!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to send. Please try WhatsApp instead.'], 500);
+    }
+}
+add_action('wp_ajax_nopriv_popeye_inquiry', 'popeye_handle_inquiry');
+add_action('wp_ajax_popeye_inquiry', 'popeye_handle_inquiry');
