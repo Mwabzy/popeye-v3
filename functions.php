@@ -30,7 +30,7 @@ function popeye_enqueue_assets() {
         'popeye-main',
         get_stylesheet_directory_uri() . '/js/main.js',
         [],
-        '2.5',
+        '2.6',
         true  // load in footer
     );
 

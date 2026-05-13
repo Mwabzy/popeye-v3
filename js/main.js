@@ -80,7 +80,7 @@ function createPlannerHTML() {
 
             <div class="step-nav" style="margin-top: 1.5rem">
                 <button class="btn-back js-back">Back</button>
-                <button class="btn-next js-send planner-send-btn">Start conversation</button>
+                <button class="btn-next js-send planner-send-btn">Submit Request</button>
             </div>
         </div>
     `;
@@ -202,7 +202,7 @@ function initPlanner(container) {
 
       const showSendError = (errMsg) => {
         sendBtn.disabled = false;
-        sendBtn.textContent = "Start conversation";
+        sendBtn.textContent = "Submit Request";
         let errEl = stepNav.querySelector(".planner-error");
         if (!errEl) {
           errEl = document.createElement("p");
