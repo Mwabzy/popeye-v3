@@ -194,7 +194,7 @@ function initPlanner(container) {
   sendBtn.addEventListener("click", () => {
     const msg = buildMsg();
     if (state.channel === "wa") {
-      const url = `https://wa.me/254726875876?text=${encodeURIComponent(msg)}`;
+      const url = `https://wa.me/254796410030?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
     } else {
       const subject = `Trip inquiry: ${state.type} in ${state.destinations.join(", ") || "East Africa"}`;

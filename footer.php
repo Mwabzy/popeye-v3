@@ -41,8 +41,8 @@
                     </span>
                     <h3>Phone</h3>
                 </div>
-                <a href="tel:+254726875876">Phone: +254 726 875876</a>
-                <a href="tel:+254721378596">Phone: +254 721 378596</a>
+                <a href="tel:+254796410030">Phone: +254 796 410030</a>
+                <a href="tel:+254796410030">Phone: +254 796 410030</a>
             </div>
 
             <div class="footer-column">

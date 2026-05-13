@@ -58,7 +58,7 @@ get_header();
         <div class="policy-contact-box">
             <strong>Popeye Tours</strong><br>
             <a href="mailto:info@popeyetours.co.ke">info@popeyetours.co.ke</a><br>
-            <a href="tel:+254726875876">+254 726 875876</a>
+            <a href="tel:+254796410030">+254 796 410030</a>
         </div>
         <p>The responsible party is the natural or legal person who alone or jointly with others decides on the purposes and means of processing personal data (names, email addresses, etc.).</p>
 
