@@ -30,13 +30,15 @@ function popeye_enqueue_assets() {
         'popeye-main',
         get_stylesheet_directory_uri() . '/js/main.js',
         [],
-        '2.6',
+        '2.7',
         true  // load in footer
     );
 
     wp_localize_script('popeye-main', 'popeyeAjax', [
-        'url'   => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('popeye_inquiry'),
+        'url'          => admin_url('admin-ajax.php'),
+        'nonce'        => wp_create_nonce('popeye_inquiry'),
+        'destinations' => popeye_get_planner_destinations(),
+        'tripTypes'    => popeye_get_trip_types(),
     ]);
 }
 add_action('wp_enqueue_scripts', 'popeye_enqueue_assets');
@@ -1106,16 +1108,352 @@ function popeye_customize_register($wp_customize) {
 add_action('customize_register', 'popeye_customize_register');
 
 
+// ── Trip Planner: Data helpers ───────────────────────────────────────────────
+function popeye_get_planner_destinations() {
+    $posts = get_posts([
+        'post_type'      => 'destination',
+        'posts_per_page' => -1,
+        'post_status'    => 'publish',
+        'orderby'        => 'menu_order title',
+        'order'          => 'ASC',
+    ]);
+    $titles = array_map(fn( $p ) => get_the_title($p->ID), $posts);
+    $titles[] = 'Surprise me';
+    return array_values($titles);
+}
+
+function popeye_get_trip_types() {
+    $defaults = ['Day trip', 'Multi-day safari', 'Beach escape', 'City break', 'Mixed'];
+    $stored   = get_option('popeye_trip_types', $defaults);
+    $types    = array_values(array_filter(array_map('sanitize_text_field', (array) $stored)));
+    return empty($types) ? $defaults : $types;
+}
+
+
+// ── Trip Planner: Admin menu ─────────────────────────────────────────────────
+function popeye_register_trip_planner_menu() {
+    add_menu_page(
+        'Trip Planner',
+        'Trip Planner',
+        'manage_options',
+        'popeye-trip-planner',
+        'popeye_trip_types_page',
+        'dashicons-palmtree',
+        25
+    );
+    add_submenu_page(
+        'popeye-trip-planner',
+        'Trip Types',
+        'Trip Types',
+        'manage_options',
+        'popeye-trip-planner',
+        'popeye_trip_types_page'
+    );
+    add_submenu_page(
+        'popeye-trip-planner',
+        'Destinations',
+        'Destinations',
+        'manage_options',
+        'edit.php?post_type=destination'
+    );
+    add_submenu_page(
+        'popeye-trip-planner',
+        'Preview Email',
+        'Preview Email',
+        'manage_options',
+        'popeye-preview-email',
+        'popeye_preview_email_page'
+    );
+}
+add_action('admin_menu', 'popeye_register_trip_planner_menu');
+
+function popeye_preview_email_page() {
+    if ( ! current_user_can('manage_options') ) {
+        wp_die(__('Unauthorized'));
+    }
+
+    $sample_body = "Hi Popeye Tours! 👋\n\nI'm Jane Doe and I'm looking to plan a multi-day safari in Kenya, Tanzania.\n\n💰 Budget: \$800-\$2,000\n\nMy contact: jane@example.com\n\nCan you help me build this trip?";
+    $sample_additional = "We're a family of 4 — two adults and two kids (ages 8 and 11). Travelling late August. Would love a camp with a pool if possible.";
+
+    $html = popeye_build_inquiry_email('Jane Doe', 'jane@example.com', $sample_body, $sample_additional);
+    ?>
+    <div class="wrap">
+        <h1>Email Template Preview</h1>
+        <p style="color:#555;margin-bottom:16px;">
+            This is how inquiry emails will appear in the recipient's inbox. Sample data is used for illustration.
+        </p>
+        <div style="border:1px solid #ddd;border-radius:6px;overflow:hidden;max-width:660px;">
+            <div style="background:#f0f0f0;padding:10px 16px;font-size:13px;color:#555;border-bottom:1px solid #ddd;font-family:monospace;">
+                <strong>To:</strong> contact@popeyetours.co.ke &nbsp;&nbsp;
+                <strong>From:</strong> Jane Doe &lt;jane@example.com&gt; &nbsp;&nbsp;
+                <strong>Subject:</strong> Contact Enquiry from Jane Doe
+            </div>
+            <iframe
+                id="popeye-email-preview"
+                style="width:100%;border:none;display:block;"
+                srcdoc="<?php echo esc_attr($html); ?>"
+            ></iframe>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var frame = document.getElementById('popeye-email-preview');
+            function resize() {
+                try {
+                    frame.style.height = frame.contentDocument.body.scrollHeight + 'px';
+                } catch(e) {}
+            }
+            frame.addEventListener('load', resize);
+            setTimeout(resize, 300);
+        })();
+    </script>
+    <?php
+}
+
+function popeye_trip_types_page() {
+    if ( ! current_user_can('manage_options') ) {
+        wp_die(__('Unauthorized'));
+    }
+
+    $types   = popeye_get_trip_types();
+    $message = '';
+    $error   = '';
+
+    if ( ! empty($_POST) ) {
+        if (
+            ! isset($_POST['popeye_trip_types_nonce']) ||
+            ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['popeye_trip_types_nonce'])), 'popeye_trip_types')
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        if ( isset($_POST['popeye_add_type']) ) {
+            $new = sanitize_text_field(wp_unslash($_POST['popeye_new_type'] ?? ''));
+            if ( $new === '' ) {
+                $error = 'Please enter a trip type name.';
+            } elseif ( in_array($new, $types, true) ) {
+                $error = '"' . esc_html($new) . '" already exists.';
+            } else {
+                $types[] = $new;
+                update_option('popeye_trip_types', array_values($types));
+                $message = '"' . esc_html($new) . '" added successfully.';
+            }
+        }
+
+        if ( isset($_POST['popeye_delete_type']) ) {
+            $del   = sanitize_text_field(wp_unslash($_POST['popeye_delete_type']));
+            $types = array_values(array_filter($types, fn( $t ) => $t !== $del));
+            update_option('popeye_trip_types', $types);
+            $message = '"' . esc_html($del) . '" deleted.';
+        }
+
+        $types = popeye_get_trip_types();
+    }
+    ?>
+    <div class="wrap">
+        <h1>Trip Types</h1>
+        <p style="color:#555;max-width:600px;">Manage the trip type options shown in the planner form. Changes take effect immediately on the site.</p>
+
+        <?php if ( $message ) : ?>
+            <div class="notice notice-success is-dismissible"><p><?php echo esc_html($message); ?></p></div>
+        <?php endif; ?>
+        <?php if ( $error ) : ?>
+            <div class="notice notice-error is-dismissible"><p><?php echo esc_html($error); ?></p></div>
+        <?php endif; ?>
+
+        <table class="wp-list-table widefat fixed striped" style="max-width:560px;margin-top:20px;">
+            <thead>
+                <tr>
+                    <th>Trip Type</th>
+                    <th style="width:80px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ( $types as $type ) : ?>
+                <tr>
+                    <td><?php echo esc_html($type); ?></td>
+                    <td>
+                        <form method="post" style="display:inline;">
+                            <?php wp_nonce_field('popeye_trip_types', 'popeye_trip_types_nonce'); ?>
+                            <input type="hidden" name="popeye_delete_type" value="<?php echo esc_attr($type); ?>">
+                            <button type="submit" class="button-link-delete"
+                                onclick="return confirm('Delete \'<?php echo esc_js($type); ?>\'?')">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                <?php if ( empty($types) ) : ?>
+                <tr><td colspan="2" style="color:#888;">No trip types defined. Add one below.</td></tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <h2 style="margin-top:32px;">Add New Trip Type</h2>
+        <form method="post" style="max-width:400px;">
+            <?php wp_nonce_field('popeye_trip_types', 'popeye_trip_types_nonce'); ?>
+            <table class="form-table">
+                <tr>
+                    <th><label for="popeye_new_type">Name</label></th>
+                    <td>
+                        <input type="text" id="popeye_new_type" name="popeye_new_type"
+                            class="regular-text" placeholder="e.g. Honeymoon getaway" required>
+                    </td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="popeye_add_type" class="button button-primary" value="Add Trip Type">
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+
+// ── Trip Planner: HTML email template ───────────────────────────────────────
+function popeye_build_inquiry_email( $name, $contact, $body, $additional_info = '' ) {
+    $year         = gmdate('Y');
+    $display_name = $name ?: 'the enquirer';
+
+    $rows = '';
+    foreach ( explode("\n", $body) as $line ) {
+        $line = trim($line);
+        if ( $line === '' ) continue;
+        if ( strpos($line, 'Hi Popeye Tours') === 0 ) continue;
+        if ( strpos($line, 'Can you help') === 0 ) continue;
+
+        if ( preg_match('/^I\'m (.+) and I\'m looking to plan a (.+) in (.+)\.$/', $line, $m) ) {
+            $rows .= '
+              <tr>
+                <td style="padding:12px 0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;width:130px;vertical-align:top;border-bottom:1px solid #eee;">Trip Type</td>
+                <td style="padding:12px 0;font-size:15px;color:#222;border-bottom:1px solid #eee;">' . esc_html(ucfirst($m[2])) . '</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;vertical-align:top;border-bottom:1px solid #eee;">Destination(s)</td>
+                <td style="padding:12px 0;font-size:15px;color:#222;border-bottom:1px solid #eee;">' . esc_html($m[3]) . '</td>
+              </tr>';
+        } elseif ( strpos($line, '💰 Budget:') !== false ) {
+            $budget = trim(str_replace('💰 Budget:', '', $line));
+            $rows .= '
+              <tr>
+                <td style="padding:12px 0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;vertical-align:top;border-bottom:1px solid #eee;">Budget</td>
+                <td style="padding:12px 0;font-size:15px;color:#222;border-bottom:1px solid #eee;">' . esc_html($budget) . ' per person</td>
+              </tr>';
+        } elseif ( strpos($line, 'My contact:') !== false ) {
+            $contact_val = trim(str_replace('My contact:', '', $line));
+            $rows .= '
+              <tr>
+                <td style="padding:12px 0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;vertical-align:top;border-bottom:1px solid #eee;">Contact</td>
+                <td style="padding:12px 0;font-size:15px;color:#222;border-bottom:1px solid #eee;">' . esc_html($contact_val) . '</td>
+              </tr>';
+        }
+    }
+
+    $additional_section = '';
+    if ( ! empty(trim($additional_info)) ) {
+        $additional_section = '
+        <tr>
+          <td style="padding:0 40px 32px;">
+            <p style="margin:0 0 10px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Additional Information</p>
+            <div style="background:#f5f3ef;border-left:3px solid #c96a4e;border-radius:0 6px 6px 0;padding:16px 20px;">
+              <p style="margin:0;font-size:15px;color:#333;line-height:1.7;">' . nl2br(esc_html(trim($additional_info))) . '</p>
+            </div>
+          </td>
+        </tr>';
+    }
+
+    return '<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>New Trip Inquiry — Popeye Tours</title>
+</head>
+<body style="margin:0;padding:0;background:#f0ede6;font-family:Georgia,\'Times New Roman\',serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0ede6;padding:40px 16px;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;width:100%;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#c96a4e;padding:40px;text-align:center;">
+            <p style="margin:0 0 12px;font-size:11px;letter-spacing:.2em;color:#f5ddd5;text-transform:uppercase;">Popeye Tours</p>
+            <h1 style="margin:0;font-size:26px;font-weight:400;color:#ffffff;letter-spacing:.02em;">New Trip Inquiry</h1>
+          </td>
+        </tr>
+
+        <!-- Sender info -->
+        <tr>
+          <td style="padding:36px 40px 8px;">
+            <p style="margin:0;font-size:15px;color:#555;line-height:1.7;">
+              A new enquiry has been submitted via the trip planner. Here are the details:
+            </p>
+          </td>
+        </tr>
+
+        <!-- Name row -->
+        <tr>
+          <td style="padding:0 40px 8px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:12px 0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;width:130px;vertical-align:top;border-bottom:1px solid #eee;">From</td>
+                <td style="padding:12px 0;font-size:15px;color:#222;font-weight:600;border-bottom:1px solid #eee;">' . esc_html($name ?: '(Not provided)') . '</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;vertical-align:top;border-bottom:1px solid #eee;">Email</td>
+                <td style="padding:12px 0;font-size:15px;border-bottom:1px solid #eee;">
+                  <a href="mailto:' . esc_attr($contact) . '" style="color:#c96a4e;text-decoration:none;">' . esc_html($contact) . '</a>
+                </td>
+              </tr>
+              ' . $rows . '
+            </table>
+          </td>
+        </tr>
+
+        ' . $additional_section . '
+
+        <!-- Reply CTA -->
+        <tr>
+          <td style="padding:8px 40px 40px;">
+            <a href="mailto:' . esc_attr($contact) . '?subject=Re%3A%20Your%20Popeye%20Tours%20Inquiry"
+               style="display:inline-block;background:#c96a4e;color:#ffffff;padding:14px 30px;border-radius:50px;font-size:13px;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;">
+              Reply to ' . esc_html($display_name) . '
+            </a>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f5f3ef;padding:24px 40px;text-align:center;border-top:1px solid #e8e5e0;">
+            <p style="margin:0;font-size:12px;color:#999;line-height:1.6;">
+              Submitted via the trip planner on <strong>popeyetours.co.ke</strong>
+            </p>
+            <p style="margin:6px 0 0;font-size:11px;color:#bbb;">&copy; ' . $year . ' Popeye Tours</p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>';
+}
+
+
 // ── Trip Planner: AJAX inquiry handler ──────────────────────────────────────
 function popeye_handle_inquiry() {
     if ( ! check_ajax_referer('popeye_inquiry', 'nonce', false) ) {
         wp_send_json_error(['message' => 'Security check failed.'], 403);
     }
 
-    $name    = sanitize_text_field(wp_unslash($_POST['name'] ?? ''));
-    $contact = sanitize_email(wp_unslash($_POST['contact'] ?? ''));
-    $subject = sanitize_text_field(wp_unslash($_POST['subject'] ?? ''));
-    $body    = sanitize_textarea_field(wp_unslash($_POST['body'] ?? ''));
+    $name            = sanitize_text_field(wp_unslash($_POST['name'] ?? ''));
+    $contact         = sanitize_email(wp_unslash($_POST['contact'] ?? ''));
+    $subject         = sanitize_text_field(wp_unslash($_POST['subject'] ?? ''));
+    $body            = sanitize_textarea_field(wp_unslash($_POST['body'] ?? ''));
+    $additional_info = sanitize_textarea_field(wp_unslash($_POST['additional_info'] ?? ''));
 
     if ( empty($contact) || ! is_email($contact) ) {
         wp_send_json_error(['message' => 'Please enter a valid email address.'], 400);
@@ -1125,12 +1463,14 @@ function popeye_handle_inquiry() {
         wp_send_json_error(['message' => 'Missing required fields.'], 400);
     }
 
+    $html_body = popeye_build_inquiry_email($name, $contact, $body, $additional_info);
+
     $headers = [
-        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Type: text/html; charset=UTF-8',
         'Reply-To: ' . $name . ' <' . $contact . '>',
     ];
 
-    $sent = wp_mail('contact@popeyetours.co.ke', $subject, $body, $headers);
+    $sent = wp_mail('contact@popeyetours.co.ke', $subject, $html_body, $headers);
 
     if ( $sent ) {
         wp_send_json_success(['message' => 'Message sent!']);
