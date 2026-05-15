@@ -214,7 +214,7 @@ function initPlanner(container) {
       const url = `https://wa.me/254796410030?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
     } else {
-      const subject = `Contact Enquiry from ${state.name || "a visitor"}`;
+      const subject = `Contact Form Enquiry From "${state.name || "a visitor"}"`;
       const stepNav = sendBtn.closest(".step-nav");
 
       const showSendError = (errMsg) => {

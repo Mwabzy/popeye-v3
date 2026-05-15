@@ -1186,7 +1186,7 @@ function popeye_preview_email_page() {
             <div style="background:#f0f0f0;padding:10px 16px;font-size:13px;color:#555;border-bottom:1px solid #ddd;font-family:monospace;">
                 <strong>To:</strong> contact@popeyetours.co.ke &nbsp;&nbsp;
                 <strong>From:</strong> Jane Doe &lt;jane@example.com&gt; &nbsp;&nbsp;
-                <strong>Subject:</strong> Contact Enquiry from Jane Doe
+                <strong>Subject:</strong> Contact Form Enquiry From "Jane Doe"
             </div>
             <iframe
                 id="popeye-email-preview"
