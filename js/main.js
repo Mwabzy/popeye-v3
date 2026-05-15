@@ -3,20 +3,6 @@
    ============================================= */
 
 function createPlannerHTML() {
-  const dests = (window.popeyeAjax && popeyeAjax.destinations) || [
-    "Kenya", "Tanzania", "Zanzibar", "Uganda", "Rwanda", "Seychelles", "Surprise me",
-  ];
-  const types = (window.popeyeAjax && popeyeAjax.tripTypes) || [
-    "Day trip", "Multi-day safari", "Beach escape", "City break", "Mixed",
-  ];
-
-  const destPillsHTML = dests
-    .map((d) => `<div class="pill" data-val="${d}">${d}</div>`)
-    .join("");
-  const typePillsHTML = types
-    .map((t, i) => `<div class="pill${i === 0 ? " selected" : ""}" data-val="${t}">${t}</div>`)
-    .join("");
-
   return `
         <!-- Step 1 -->
         <div class="planner-step active" data-step="1">
@@ -29,11 +15,25 @@ function createPlannerHTML() {
             <div class="planner-grid">
                 <div class="form-group">
                     <label>Destinations (Multi-select)</label>
-                    <div class="pill-group dest-pills">${destPillsHTML}</div>
+                    <div class="pill-group dest-pills">
+                        <div class="pill" data-val="Kenya">Kenya</div>
+                        <div class="pill" data-val="Tanzania">Tanzania</div>
+                        <div class="pill" data-val="Zanzibar">Zanzibar</div>
+                        <div class="pill" data-val="Uganda">Uganda</div>
+                        <div class="pill" data-val="Rwanda">Rwanda</div>
+                        <div class="pill" data-val="Seychelles">Seychelles</div>
+                        <div class="pill" data-val="Surprise me">Surprise me</div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Trip Type (Select one)</label>
-                    <div class="pill-group type-pills">${typePillsHTML}</div>
+                    <div class="pill-group type-pills">
+                        <div class="pill selected" data-val="Day trip">Day trip</div>
+                        <div class="pill" data-val="Multi-day safari">Multi-day safari</div>
+                        <div class="pill" data-val="Beach escape">Beach escape</div>
+                        <div class="pill" data-val="City break">City break</div>
+                        <div class="pill" data-val="Mixed">Mixed</div>
+                    </div>
                 </div>
             </div>
             <div class="step-nav">
@@ -76,10 +76,6 @@ function createPlannerHTML() {
                     <label class="contact-label">WhatsApp Number</label>
                     <input type="text" class="input-styled planner-contact" placeholder="+1 234 567 8900">
                 </div>
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label>Additional Information <span style="font-weight:400;opacity:0.6;">(optional)</span></label>
-                    <textarea class="input-styled planner-notes" rows="3" placeholder="Travel dates, special requirements, questions…" style="resize:vertical;width:100%;box-sizing:border-box;"></textarea>
-                </div>
             </div>
 
             <div class="step-nav" style="margin-top: 1.5rem">
@@ -96,18 +92,13 @@ function initPlanner(container) {
   const steps = container.querySelectorAll(".planner-step");
   let currentStep = 1;
 
-  const defaultType = window.popeyeAjax && popeyeAjax.tripTypes && popeyeAjax.tripTypes[0]
-    ? popeyeAjax.tripTypes[0]
-    : "Day trip";
-
   const state = {
     destinations: [],
-    type: defaultType,
+    type: "Day trip",
     name: "",
     budget: "Flexible",
     channel: "wa",
     contact: "",
-    notes: "",
   };
 
   // Step Navigation
@@ -166,9 +157,6 @@ function initPlanner(container) {
   container.querySelector(".planner-contact").addEventListener("input", (e) => {
     state.contact = e.target.value;
   });
-  container.querySelector(".planner-notes").addEventListener("input", (e) => {
-    state.notes = e.target.value;
-  });
 
   // Channel Toggle
   const channelBtns = container.querySelectorAll(".channel-btn");
@@ -199,12 +187,7 @@ function initPlanner(container) {
   // Build message
   const buildMsg = () => {
     const dest = state.destinations.length > 0 ? state.destinations.join(", ") : "East Africa";
-    let msg = `Hi Popeye Tours! 👋\n\nI'm ${state.name || "(Your Name)"} and I'm looking to plan a ${state.type.toLowerCase()} in ${dest}.\n\n💰 Budget: ${state.budget}\n\nMy contact: ${state.contact || "(Provided)"}`;
-    if (state.notes.trim()) {
-      msg += `\n\nAdditional info:\n${state.notes.trim()}`;
-    }
-    msg += `\n\nCan you help me build this trip?`;
-    return msg;
+    return `Hi Popeye Tours! 👋\n\nI'm ${state.name || "(Your Name)"} and I'm looking to plan a ${state.type.toLowerCase()} in ${dest}.\n\n💰 Budget: ${state.budget}\n\nMy contact: ${state.contact || "(Provided)"}\n\nCan you help me build this trip?`;
   };
 
   // Send
@@ -214,7 +197,7 @@ function initPlanner(container) {
       const url = `https://wa.me/254796410030?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
     } else {
-      const subject = `Contact Enquiry from ${state.name || "a visitor"}`;
+      const subject = `Trip inquiry: ${state.type} in ${state.destinations.join(", ") || "East Africa"}`;
       const stepNav = sendBtn.closest(".step-nav");
 
       const showSendError = (errMsg) => {
@@ -240,7 +223,6 @@ function initPlanner(container) {
       formData.append("contact", state.contact);
       formData.append("subject", subject);
       formData.append("body", msg);
-      formData.append("additional_info", state.notes);
 
       fetch(popeyeAjax.url, { method: "POST", body: formData })
         .then((r) => r.json())
